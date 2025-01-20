@@ -15,3 +15,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::apiResource('users', App\Http\Controllers\UserController::class);
+
+Route::post('/auth/login', [App\Http\Controllers\AuthController::class, 'login']);
+Route::post('/auth/logout', [App\Http\Controllers\AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/auth/profile', [App\Http\Controllers\AuthController::class, 'profile'])->middleware('auth:sanctum');
