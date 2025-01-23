@@ -16,3 +16,29 @@ php artisan jwt:secret
 Lệnh trên sẽ tạo một key và lưu vào file .env với tên:
 
 JWT_SECRET=your_generated_secret
+
+3. Thiết lập User Model
+   Thêm interface JWTSubject vào model User để hỗ trợ JWT. Sửa file App\Models\User như sau:
+
+<?php
+
+namespace App\Models;
+
+use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class User extends Authenticatable implements JWTSubject
+{
+    // Các thuộc tính mặc định của User...
+
+    // Các phương thức của JWTSubject
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
+}

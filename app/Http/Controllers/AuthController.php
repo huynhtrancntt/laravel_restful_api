@@ -37,6 +37,7 @@ class AuthController extends Controller
         ], 401);
     }
 
+
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -54,6 +55,39 @@ class AuthController extends Controller
         $response['message'] = 'User details.';
 
         return response()->json($response);
+    }
+
+
+
+    public function login_jwt(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (!$token = auth("api")->attempt($credentials)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        return $this->respondWithToken($token);
+    }
+
+    public function logout_jwt()
+    {
+        auth()->logout();
+
+        return response()->json(['message' => 'Successfully logged out']);
+    }
+
+    protected function respondWithToken($token)
+    {
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth("api")->factory()->getTTL() * 60 // thời gian hết hạn token (mặc định 60 phút)
+        ]);
+    }
+    public function profile_jwt()
+    {
+        return response()->json(auth()->user());
     }
 
 }
