@@ -26,3 +26,10 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('/auth/logout_jwt', [App\Http\Controllers\AuthController::class, 'logout_jwt']);
     Route::get('/auth/profile_jwt', [App\Http\Controllers\AuthController::class, 'profile_jwt'])->middleware('auth.jwt');
 });
+
+
+Route::group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function () {
+    Route::apiResource('customers', CustomerController::class);
+    Route::apiResource('invoices', InvoiceController::class);
+});
+
