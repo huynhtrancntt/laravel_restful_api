@@ -10,6 +10,7 @@ use App\Http\Resources\v1\CustomerCollection;
 use Illuminate\Http\Request;
 use App\Services\V1\CustomerFilter;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 class CustomerController extends Controller
 {
     /**
@@ -21,17 +22,25 @@ class CustomerController extends Controller
         $filter = new CustomerFilter();
         $queryItems = $filter->transform($request);
 
-        $includeInvoices =  $request->query('includeInvoices');
+        $includeInvoices = $request->query('includeInvoices');
 
-        $customers = Customer::where($queryItems);
-        if($includeInvoices)
-        {
-            $customers =  $customers->with('invoices');
+        // Xây dựng query
+        $customersQuery = Customer::where($queryItems);
+        if ($includeInvoices) {
+            $customersQuery = $customersQuery->with('invoices');
         }
 
-        return new CustomerCollection($customers->paginate()->appends($request->query()));
+        // Paginate dữ liệu
+        $customers = $customersQuery->paginate()->appends($request->query());
 
+        // Trả về JSON với cấu trúc chuẩn sử dụng CustomerCollection
+        return response()->json([
+            'success' => true,
+            'message' => 'Customer list retrieved successfully.',
+            'data' => new CustomerCollection($customers), // Sử dụng CustomerCollection,
+        ], 200);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -39,6 +48,7 @@ class CustomerController extends Controller
     public function create()
     {
         //
+
     }
 
     /**
@@ -46,23 +56,41 @@ class CustomerController extends Controller
      */
     public function store(StoreCustomerRequest $request)
     {
-        //
+        return new CustomerResource(Customer::create($request->all()));
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Customer $customer)
+    public function show($id)
     {
+        try {
+            // Tìm customer hoặc trả về lỗi
+            $customer = Customer::findOrFail($id);
 
-        $includeInvoices =  request()->query('includeInvoices');
+            // Kiểm tra query parameter includeInvoices
+            $includeInvoices = request()->query('includeInvoices');
 
-        if($includeInvoices)
-        {
-            return new CustomerResource($customer->loadMissing('invoices'));
+            // Load invoices nếu includeInvoices được truyền
+            if ($includeInvoices) {
+                $customer->loadMissing('invoices');
+            }
+
+            // Trả về JSON với cấu trúc yêu cầu
+            return response()->json([
+                'success' => true,
+                'message' => 'User details.',
+                'data' => new CustomerResource($customer),
+            ], 200);
+
+        } catch (ModelNotFoundException $e) {
+
+            // Xử lý khi không tìm thấy model
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer not found.',
+            ], 404);
         }
-
-        return new CustomerResource($customer);
     }
 
     /**
