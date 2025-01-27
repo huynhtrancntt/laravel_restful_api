@@ -44,6 +44,19 @@ class User extends Authenticatable implements JWTSubject
         'password' => 'hashed',
     ];
 
+        // Mối quan hệ nhiều-nhiều với Role
+        public function roles()
+        {
+            return $this->belongsToMany(Role::class, 'role_user');
+        }
+
+        // Kiểm tra quyền của user
+        public function hasPermission($permission)
+        {
+            return $this->roles->pluck('permissions')->flatten()->pluck('name')->contains($permission);
+        }
+
+
 
     // Các phương thức của JWTSubject
     public function getJWTIdentifier()

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
@@ -61,13 +63,51 @@ class AuthController extends Controller
 
     public function login_jwt(Request $request)
     {
+        // $credentials = $request->only('email', 'password');
+
+        // if (!$token = auth("api")->attempt($credentials)) {
+        //     return response()->json(['error' => 'Unauthorized'], 401);
+        // }
+
+        // return $this->respondWithToken($token);
+
+        // Kiểm tra email và password của người dùng
         $credentials = $request->only('email', 'password');
 
-        if (!$token = auth("api")->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        // Xác thực người dùng và tạo token
+        if ($token = JWTAuth::attempt($credentials)) {
+            // Lấy thông tin người dùng hiện tại
+            $user = auth()->user();
+
+            // Lấy thông tin role và permissions của người dùng
+            $roles = $user->roles->pluck('name')->toArray();  // Lấy tên role
+            $permissions = $user->roles->pluck('permissions')->flatten()->pluck('name')->toArray();  // Lấy tên permissions từ các role
+
+            // Thêm thông tin role và permissions vào token
+            // $customClaims = [
+            //     'roles' => $roles,
+            //     'permissions' => $permissions
+            // ];
+
+            // Tạo lại token với các custom claims
+            // $token = JWTAuth::customClaims($customClaims)->attempt($credentials);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Login successful.',
+                'token' => $token,
+                'roles' => $roles,  // Trả về role
+                'permissions' => $permissions  // Trả về permissions
+            ]);
         }
 
-        return $this->respondWithToken($token);
+        // Nếu login thất bại
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid credentials.'
+        ], 401);
+
+
     }
 
     public function logout_jwt()

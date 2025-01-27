@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Services\V1\CustomerFilter;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Http\Requests\BulkStoreCustomerRequest;
 class CustomerController extends Controller
 {
     /**
@@ -57,6 +58,27 @@ class CustomerController extends Controller
     public function store(StoreCustomerRequest $request)
     {
         return new CustomerResource(Customer::create($request->all()));
+    }
+
+    public function bulkStore(BulkStoreCustomerRequest $request)
+    {
+        // Lấy tất cả dữ liệu khách hàng từ request
+        $customersData = $request->input('customers');
+
+        // Duyệt qua mỗi khách hàng và tạo mới
+        foreach ($customersData as $customerData) {
+            // Tạo khách hàng mới mà không cần kiểm tra sự tồn tại
+            $customer = Customer::insert($customerData);
+        }
+
+        // Trả về kết quả với CustomerResource::collection
+        return response()->json([
+            'success' => true,
+            'message' => 'Customers created successfully.',
+            'data' => '',
+        ], 201);
+
+
     }
 
     /**
@@ -106,7 +128,13 @@ class CustomerController extends Controller
      */
     public function update(UpdateCustomerRequest $request, Customer $customer)
     {
-        //
+        $customer->update($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Customer updated successfully.',
+            'data' => new CustomerResource($customer),
+        ], 200);
     }
 
     /**
